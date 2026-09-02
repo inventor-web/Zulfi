@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lâmpada</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#17151b">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lâmpada">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #17151b;
+    --surface: #211e27;
+    --surface-2: #2a2632;
+    --line: #38333f;
+    --text: #f2eee6;
+    --muted: #9a93a6;
+    --off: #4a4750;
+    --on: #ffb648;
+    --on-deep: #ff8a3d;
+    --danger: #e2664d;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: radial-gradient(120% 90% at 50% -10%, #221f29 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    display:flex;
+    justify-content:center;
+    padding: 32px 20px 48px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .app{
+    width:100%;
+    max-width: 380px;
+  }
+
+  header{ margin-bottom: 28px; }
+  .eyebrow{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    margin: 0 0 4px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  /* --- hero: the lamp toggle --- */
+  .stage{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    padding: 40px 24px 32px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .bulb-wrap{
+    width: 168px;
+    height: 168px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  button.bulb{
+    all: unset;
+    cursor: pointer;
+    width: 148px;
+    height: 148px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #38333f, #221f29 70%);
+    box-shadow:
+      inset 0 0 0 1px var(--line),
+      0 0 0 0 rgba(255,182,72,0);
+    transition: background 420ms ease, box-shadow 420ms ease, transform 120ms ease;
+    position: relative;
+  }
+  button.bulb:active{ transform: scale(0.97); }
+
+  button.bulb::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(255,214,150,0.9) 0%, rgba(255,138,61,0.0) 65%);
+    opacity:0;
+    transition: opacity 420ms ease;
+  }
+
+  button.bulb.on{
+    background: radial-gradient(circle at 35% 30%, #ffd696, var(--on) 55%, var(--on-deep) 100%);
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.25),
+      0 0 40px 6px rgba(255,138,61,0.55),
+      0 0 90px 20px rgba(255,138,61,0.28);
+  }
+  button.bulb.on::after{ opacity: 0.9; }
+
+  .bulb-icon{
+    width: 46px; height: 46px;
+    stroke: var(--muted);
+    fill:none;
+    stroke-width: 1.6;
+    position:relative;
+    z-index: 2;
+    transition: stroke 420ms ease;
+  }
+  button.bulb.on .bulb-icon{ stroke: #2b1d0c; }
+
+  .status{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15px;
+    color: var(--muted);
+  }
+  .status b{ color: var(--text); font-weight:600; }
+
+  /* --- mode switch --- */
+  .switch{
+    display:flex;
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 4px;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  .switch button{
+    all: unset;
+    flex:1;
+    text-align:center;
+    padding: 9px 0;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor:pointer;
+    transition: background 200ms ease, color 200ms ease;
+  }
+  .switch button.active{
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+  }
+  .panel[hidden]{ display:none; }
+
+  label{
+    display:block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  input[type="text"]{
+    width:100%;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 11px 12px;
+    border-radius: 10px;
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 12px;
+  }
+  input[type="text"]:focus, .action:focus-visible{
+    outline: 2px solid var(--on);
+    outline-offset: 1px;
+  }
+
+  .action{
+    width:100%;
+    border:none;
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 11px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight:600;
+    font-family: inherit;
+    cursor:pointer;
+    border: 1px solid var(--line);
+  }
+  .action:hover{ background:#332e3d; }
+
+  .hint{
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-top: 12px;
+  }
+  .hint code{
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 5px;
+    font-size: 12px;
+  }
+
+  .log{
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--muted);
+    min-height: 16px;
+  }
+  .log.error{ color: var(--danger); }
+
+  @media (prefers-reduced-motion: reduce){
+    button.bulb, button.bulb::after, .bulb-icon{ transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <p class="eyebrow">ESP32</p>
+    <h1>Lâmpada</h1>
+  </header>
+
+  <div class="stage">
+    <div class="bulb-wrap">
+      <button class="bulb" id="bulbBtn" aria-pressed="false" aria-label="Alternar lâmpada">
+        <svg class="bulb-icon" viewBox="0 0 24 24">
+          <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.45 1.1 1.2 1.1 2.2h5c0-1 .5-1.75 1.1-2.2A6 6 0 0 0 12 3Z"/>
+        </svg>
+      </button>
+    </div>
+    <p class="status" id="statusText">Toque para ligar</p>
+  </div>
+
+  <button class="action" id="installBtn" hidden style="margin-bottom:16px;">Instalar app</button>
+
+  <div class="switch">
+    <button id="tabWifi" class="active">Wi-Fi</button>
+    <button id="tabBle">Bluetooth</button>
+  </div>
+
+  <section class="panel" id="panelWifi">
+    <label for="ipInput">IP do ESP32 (mesma rede)</label>
+    <input type="text" id="ipInput" placeholder="ex: 192.168.1.42" inputmode="numeric">
+    <button class="action" id="testWifiBtn">Testar conexão</button>
+    <p class="hint">Abra o Monitor Serial do Arduino IDE ao ligar o ESP32 — o IP aparece ali. O celular precisa estar na <b>mesma rede Wi-Fi</b>.</p>
+    <p class="log" id="wifiLog"></p>
+  </section>
+
+  <section class="panel" id="panelBle" hidden>
+    <button class="action" id="connectBleBtn">Procurar ESP32-Lampada</button>
+    <p class="hint">O Bluetooth via navegador (Web Bluetooth) funciona no Chrome/Edge (Android e desktop). O Safari/iOS não suporta — nesse caso use o modo Wi-Fi.</p>
+    <p class="log" id="bleLog"></p>
+  </section>
+</div>
+
+<script>
+  const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+  const CHAR_UUID     = "abcd1234-ab12-cd34-ef56-1234567890ab";
+
+  const bulbBtn = document.getElementById('bulbBtn');
+  const statusText = document.getElementById('statusText');
+  const tabWifi = document.getElementById('tabWifi');
+  const tabBle = document.getElementById('tabBle');
+  const panelWifi = document.getElementById('panelWifi');
+  const panelBle = document.getElementById('panelBle');
+  const ipInput = document.getElementById('ipInput');
+  const testWifiBtn = document.getElementById('testWifiBtn');
+  const wifiLog = document.getElementById('wifiLog');
+  const connectBleBtn = document.getElementById('connectBleBtn');
+  const bleLog = document.getElementById('bleLog');
+
+  let mode = 'wifi'; // 'wifi' | 'ble'
+  let lampOn = false;
+  let bleCharacteristic = null;
+
+  function setLog(el, msg, isError){
+    el.textContent = msg || '';
+    el.classList.toggle('error', !!isError);
+  }
+
+  function paintBulb(on){
+    lampOn = on;
+    bulbBtn.classList.toggle('on', on);
+    bulbBtn.setAttribute('aria-pressed', String(on));
+    statusText.innerHTML = on ? 'Lâmpada <b>ligada</b>' : 'Toque para ligar';
+  }
+
+  // ---- mode switch ----
+  function selectMode(m){
+    mode = m;
+    tabWifi.classList.toggle('active', m === 'wifi');
+    tabBle.classList.toggle('active', m === 'ble');
+    panelWifi.hidden = m !== 'wifi';
+    panelBle.hidden = m !== 'ble';
+  }
+  tabWifi.addEventListener('click', () => selectMode('wifi'));
+  tabBle.addEventListener('click', () => selectMode('ble'));
+
+  // ---- Wi-Fi (HTTP) ----
+  function wifiUrl(path){
+    const ip = ipInput.value.trim();
+    return `http://${ip}${path}`;
+  }
+
+  async function wifiRequest(path){
+    const ip = ipInput.value.trim();
+    if(!ip){
+      setLog(wifiLog, 'Informe o IP do ESP32 primeiro.', true);
+      return null;
+    }
+    try{
+      const res = await fetch(wifiUrl(path), { mode: 'cors' });
+      const text = await res.text();
+      setLog(wifiLog, '');
+      return text.trim();
+    } catch(err){
+      setLog(wifiLog, 'Não foi possível conectar. Confira o IP e a rede Wi-Fi.', true);
+      return null;
+    }
+  }
+
+  testWifiBtn.addEventListener('click', async () => {
+    setLog(wifiLog, 'Testando...');
+    const result = await wifiRequest('/status');
+    if(result !== null){
+      setLog(wifiLog, 'Conectado — estado atual: ' + (result === 'ON' ? 'ligada' : 'desligada'));
+      paintBulb(result === 'ON');
+    }
+  });
+
+  // ---- Bluetooth (Web Bluetooth) ----
+  connectBleBtn.addEventListener('click', async () => {
+    if(!navigator.bluetooth){
+      setLog(bleLog, 'Este navegador não suporta Web Bluetooth. Use Chrome/Edge no Android ou no computador.', true);
+      return;
+    }
+    try{
+      setLog(bleLog, 'Abrindo seletor de dispositivos...');
+      const device = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }]
+      });
+      setLog(bleLog, 'Conectando a ' + device.name + '...');
+      const server = await device.gatt.connect();
+      const service = await server.getPrimaryService(SERVICE_UUID);
+      bleCharacteristic = await service.getCharacteristic(CHAR_UUID);
+      setLog(bleLog, 'Conectado a ' + device.name + '.');
+      connectBleBtn.textContent = 'Conectado — ' + device.name;
+
+      device.addEventListener('gattserverdisconnected', () => {
+        bleCharacteristic = null;
+        connectBleBtn.textContent = 'Procurar ESP32-Lampada';
+        setLog(bleLog, 'Desconectado.');
+      });
+    } catch(err){
+      setLog(bleLog, 'Conexão cancelada ou falhou.', true);
+    }
+  });
+
+  async function bleSend(value){
+    if(!bleCharacteristic){
+      setLog(bleLog, 'Conecte ao ESP32 primeiro.', true);
+      return false;
+    }
+    try{
+      const encoder = new TextEncoder();
+      await bleCharacteristic.writeValue(encoder.encode(value));
+      return true;
+    } catch(err){
+      setLog(bleLog, 'Falha ao enviar comando.', true);
+      return false;
+    }
+  }
+
+  // ---- instalação do PWA ----
+  const installBtn = document.getElementById('installBtn');
+  let deferredInstallPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    installBtn.hidden = false;
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    await deferredInstallPrompt.userChoice;
+    deferredInstallPrompt = null;
+    installBtn.hidden = true;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installBtn.hidden = true;
+  });
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => {
+        // silencioso: app funciona normalmente mesmo sem o service worker
+      });
+    });
+  }
+
+  // ---- toggle principal ----
+  bulbBtn.addEventListener('click', async () => {
+    const next = !lampOn;
+    paintBulb(next); // resposta visual imediata
+
+    if(mode === 'wifi'){
+      const result = await wifiRequest(next ? '/on' : '/off');
+      if(result === null) paintBulb(!next); // reverte se falhou
+    } else {
+      const ok = await bleSend(next ? 'ON' : 'OFF');
+      if(!ok) paintBulb(!next);
+    }
+  });
+</script>
+</body>
+</html>
